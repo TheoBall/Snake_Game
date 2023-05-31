@@ -2,35 +2,39 @@ package com.example.snake_game;
 
 // Importation des bibliothèques
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.Image;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
     // Instanciation des variables
     private final int MAX_COOLDOWN_VALUE = 5;
-    // Permet d'instancier une valeur en dp (50 dp)
-    //DisplayMetrics displayMetrics_dp = getResources().getDisplayMetrics();
-    //private final int MOVEMENT_VALUE = (int) (50 * displayMetrics_dp.density);
     private final int MOVEMENT_VALUE = 140;
     private SensorManager sensorManager;
     private Sensor gravitometer;
     private TextView gravitometerValues;
     private ImageView snakeHead;
-    private ImageView snakeSegment;
-    private int screenWidth;
-    private int screenHeight;
-
+    private ImageView startSnakeSegment;
+    private ImageView etoile;
+    private ConstraintLayout gameLayout;
     private int cooldown = 0;
     private int directionX = 0;
     private int directionY = 0;
+    ArrayList<SnakeSegment> snakeSegmentList  = new ArrayList<>();
 
     /**
      * S'exécute lors de la création de l'activité
@@ -42,21 +46,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_main);
         snakeHead = findViewById(R.id.snakeHead);
-        snakeSegment = findViewById(R.id.snakeSegment);
+        etoile = findViewById(R.id.etoile);
+        startSnakeSegment = findViewById(R.id.snakeSegment);
         gravitometerValues = findViewById(R.id.gravitometerValues);
+        gameLayout = findViewById(R.id.gameLayout);
         snakeHead.setX(0);
         snakeHead.setY(0);
-        snakeSegment.setX(0);
-        snakeSegment.setY(0);
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        screenHeight = displayMetrics.heightPixels;
-        screenWidth = displayMetrics.widthPixels;
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         gravitometer = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
         cooldown = 10;
         directionX = 0;
-        directionY = 0;
+        directionY = -MOVEMENT_VALUE;
+        snakeSegmentList.add(new SnakeSegment(startSnakeSegment));
     }
 
     /**
@@ -108,7 +111,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 newX = snakeHead.getX() + directionX;
 
                 snakeHead.setX(newX);
-                snakeSegment.setX(oldHeadX);
 
                 float oldHeadY = snakeHead.getY();
                 float newY;
@@ -120,7 +122,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     killSnake();
                 }
                 snakeHead.setY(newY);
-                snakeSegment.setY(oldHeadY);
+                int i = 0;
+                for (SnakeSegment segment: snakeSegmentList) {
+                    if (i == 0) {
+                        segment.moveSegment(oldHeadX, oldHeadY);
+                    } else {
+                        segment.moveSegment(snakeSegmentList.get(i-1).getPreviousX(), snakeSegmentList.get(i-1).getPreviousY());
+                    }
+                    i++;
+                }
+                snakeCollision();
                 cooldown = MAX_COOLDOWN_VALUE;
         }
         cooldown--;
@@ -149,6 +160,52 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             directionY = 0;
             snakeHead.setRotation(-90);
         }
+    }
+
+    /**
+     * Sert à vérifier si le serpent est en collision avec une étoile ou un segment, si étoile, déclenche la fonction qui
+     * fait grandir le serpent et fait réapparaître l'étoile, si segment, déclenche la méthode killSnake
+     */
+    private void snakeCollision() {
+        Rect snakeHeadRect = new Rect(Math.round(snakeHead.getX()), Math.round(snakeHead.getY()), Math.round(snakeHead.getX() + snakeHead.getWidth()), Math.round(snakeHead.getY() + snakeHead.getHeight()));
+        Rect etoileRect = new Rect(Math.round(etoile.getX()), Math.round(etoile.getY()), Math.round(etoile.getX() + etoile.getWidth()), Math.round(etoile.getY() + etoile.getHeight()));
+        // Vérifier la collision avec etoile
+        if (snakeHeadRect.intersect(etoileRect)) {
+            snakeGrown();
+        }
+        for (SnakeSegment segment: snakeSegmentList) {
+            Rect segmentRect = new Rect(Math.round(segment.getX()+10), Math.round(segment.getY()+10), Math.round(segment.getX()-10 + segment.getWidth()), Math.round(segment.getY()-10 + segment.getHeight()));
+
+            if (snakeHeadRect.intersect(segmentRect)) {
+                killSnake();
+            }
+        }
+    }
+
+    public void snakeGrown() {
+        // Obtenir le dernier segment
+        SnakeSegment lastSegment = snakeSegmentList.get(snakeSegmentList.size() - 1);
+
+        // Récupérer les coordonnées précédentes du dernier segment
+        float previousX = lastSegment.getPreviousX();
+        float previousY = lastSegment.getPreviousY();
+
+        // créer le nouveau segment et lui donne les coordonnées précédantes du dernier segment
+        ImageView newSegmentImage = new ImageView(this);
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        int dp = 50; // Taille en dp
+        int tailleDp = (int) (dp * displayMetrics.density);
+        newSegmentImage.setMaxWidth(tailleDp);
+        newSegmentImage.setMaxHeight(tailleDp);
+        newSegmentImage.setAdjustViewBounds(true);
+        newSegmentImage.setImageResource(R.drawable.snake_segment);
+        SnakeSegment newSegment = new SnakeSegment(newSegmentImage);
+        newSegment.setX(previousX);
+        newSegment.setY(previousY);
+
+        // Ajouter le nouveau segment à la liste
+        snakeSegmentList.add(newSegment);
+        gameLayout.addView(newSegmentImage);
     }
 
     private void killSnake() {
