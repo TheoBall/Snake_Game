@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int cooldown = 0;
     private int directionX = 0;
     private int directionY = 0;
+    private int score = 0;
     ArrayList<SnakeSegment> snakeSegmentList  = new ArrayList<>();
 
     /**
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         cooldown = 10;
         directionX = 0;
         directionY = -MOVEMENT_VALUE;
+        score = 0;
         snakeSegmentList.add(new SnakeSegment(startSnakeSegment));
     }
 
@@ -88,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (event.sensor.getType() == Sensor.TYPE_GRAVITY) {
             float x = event.values[0];
             float y = event.values[1];
-            gravitometerValues.setText("X: " + x + "\nY: " + y);
+            gravitometerValues.setText("X: " + x + "\nY: " + y + "\nScore: " + score);
             moveSnake(x, y);
         }
     }
@@ -206,6 +208,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // Ajouter le nouveau segment à la liste
         snakeSegmentList.add(newSegment);
         gameLayout.addView(newSegmentImage);
+        score++;
     }
 
     private void killSnake() {
