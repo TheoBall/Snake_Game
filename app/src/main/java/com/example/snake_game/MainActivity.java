@@ -99,7 +99,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (event.sensor.getType() == Sensor.TYPE_GRAVITY) {
             float x = event.values[0];
             float y = event.values[1];
-            gravitometerValues.setText("X: " + x + "\nY: " + y + "\nScore: " + score);
+            double roundedX = Math.round(x * 100.0) / 100.0;
+            double roundedY = Math.round(y * 100.0) / 100.0;
+            gravitometerValues.setText("X: " + roundedX + "\nY: " + roundedY + "\nScore: " + score);
             moveSnake(x, y);
         }
     }
