@@ -12,6 +12,7 @@
         android:layout_width="118dp"
         android:layout_height="95dp"
         android:text="Values"
+        android:textColor="#FFFFFF"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:elevation="10dp"/>
