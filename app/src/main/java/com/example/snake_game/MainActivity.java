@@ -19,10 +19,18 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
     // Instanciation des variables
-    private final int MAX_COOLDOWN_VALUE = 5;
+    // Ces valeurs sont calculées sur le fait qu'il y a 7 déplacements possibles en hauteur
+    // et 15 en largeurs sur l'écran
+    private final int MAX_WIDTH_TILE_VALUE = 15;
+    private final int MAX_HEIGHT_TILE_VALUE = 7;
+    // Ces valeurs servent à décaler l'apparition de l'étoile de sorte à ce qu'elle ne se
+    // trouve pas entre deux cases
+    private final int SCREEN_WIDTH_GAP_VALUE = 54;
+    private final int SCREEN_HEIGHT_GAP_VALUE = 5;
     private final int MOVEMENT_VALUE = 140;
     private SensorManager sensorManager;
     private Sensor gravitometer;
@@ -35,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int directionX = 0;
     private int directionY = 0;
     private int score = 0;
+    private int cooldownValue = 5;
     ArrayList<SnakeSegment> snakeSegmentList  = new ArrayList<>();
 
     /**
@@ -104,6 +113,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     /**
      * Bouge le serpent et ses parties en fonction des directions X et Y
+     * @param x direction x de l'inclinaison du téléphone
+     * @param y direction y de l'inclinaison du téléphone
      */
     private void moveSnake(float x, float y) {
         if (cooldown == 0) {
@@ -134,26 +145,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     i++;
                 }
                 snakeCollision();
-                cooldown = MAX_COOLDOWN_VALUE;
+                snakeAcceleration();
+                cooldown = cooldownValue;
         }
         cooldown--;
     }
 
     /**
      * Sert à changer la direction du serpent et à faire qu'il ne puisse pas retourner sur ses pas
-     * @param x
-     * @param y
+     * @param x inclinaison du téléphone sur l'axe x
+     * @param y inclinaison du téléphone sur l'axe y
      */
     private void rotateSnake(float x, float y) {
-        if (y > 2 && directionY != -MOVEMENT_VALUE) {
-            directionY = MOVEMENT_VALUE;
-            directionX = 0;
-            snakeHead.setRotation(180);
-        } else if (y < -2 && directionY != MOVEMENT_VALUE) {
-            directionY = -MOVEMENT_VALUE;
-            directionX = 0;
-            snakeHead.setRotation(0);
-        } else if (x > 2 && directionX != -MOVEMENT_VALUE) {
+        if (x > 2 && directionX != -MOVEMENT_VALUE) {
             directionX = MOVEMENT_VALUE;
             directionY = 0;
             snakeHead.setRotation(90);
@@ -161,6 +165,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             directionX = -MOVEMENT_VALUE;
             directionY = 0;
             snakeHead.setRotation(-90);
+        } else if (y > 2 && directionY != -MOVEMENT_VALUE) {
+            directionY = MOVEMENT_VALUE;
+            directionX = 0;
+            snakeHead.setRotation(180);
+        } else if (y < -2 && directionY != MOVEMENT_VALUE) {
+            directionY = -MOVEMENT_VALUE;
+            directionX = 0;
+            snakeHead.setRotation(0);
         }
     }
 
@@ -184,7 +196,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    public void snakeGrown() {
+    /**
+     * Fais grossir le serpent en ajoutant un segment à sa liste
+     */
+    private void snakeGrown() {
         // Obtenir le dernier segment
         SnakeSegment lastSegment = snakeSegmentList.get(snakeSegmentList.size() - 1);
 
@@ -209,8 +224,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         snakeSegmentList.add(newSegment);
         gameLayout.addView(newSegmentImage);
         score++;
+        respawnStar();
     }
 
+    private void snakeAcceleration() {
+        switch(score){
+            case 2: cooldownValue=4; break;
+            case 10: cooldownValue=3; break;
+            case 20: cooldownValue=2; break;
+            case 40: cooldownValue=1; break;
+        }
+    }
+
+    /**
+     * Fais réapparaitre l'étoile à un autre endroit sur le terrain
+     */
+    private void respawnStar() {
+        int newX = 0;
+        int newY = 0;
+        Random random = new Random();
+        newX = random.nextInt(MAX_WIDTH_TILE_VALUE)*MOVEMENT_VALUE+SCREEN_WIDTH_GAP_VALUE;
+        newY = random.nextInt(MAX_HEIGHT_TILE_VALUE)*MOVEMENT_VALUE+SCREEN_HEIGHT_GAP_VALUE;
+        etoile.setX(newX);
+        etoile.setY(newY);
+    }
+
+    /**
+     * Game Over
+     */
     private void killSnake() {
         this.finish();
     }
