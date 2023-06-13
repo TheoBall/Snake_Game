@@ -31,6 +31,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     // trouve pas entre deux cases
     private final int SCREEN_WIDTH_GAP_VALUE = 54;
     private final int SCREEN_HEIGHT_GAP_VALUE = 5;
+    // Ces valeurs servent au switch pour savoir à partir de quel score le serpent doit
+    // accélérer
+    private final int LOW_ACCELERATION = 2;
+    private final int MEDIUM_ACCELERATION = 10;
+    private final int FAST_ACCELERATION = 20;
+    private final int SUPERSONIC_ACCELERATION = 40;
+    // Cette valeur définit la sensibilité de la rotation du serpent utilisée dans rotateSnake
+    private final float ROTATION_SENSIBILITY = 2;
     private final int MOVEMENT_VALUE = 140;
     private SensorManager sensorManager;
     private Sensor gravitometer;
@@ -159,19 +167,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
      * @param y inclinaison du téléphone sur l'axe y
      */
     private void rotateSnake(float x, float y) {
-        if (x > 2 && directionX != -MOVEMENT_VALUE) {
+        if (x > ROTATION_SENSIBILITY && directionX != -MOVEMENT_VALUE) {
             directionX = MOVEMENT_VALUE;
             directionY = 0;
             snakeHead.setRotation(90);
-        } else if (x < -2 && directionX != MOVEMENT_VALUE) {
+        } else if (x < -ROTATION_SENSIBILITY && directionX != MOVEMENT_VALUE) {
             directionX = -MOVEMENT_VALUE;
             directionY = 0;
             snakeHead.setRotation(-90);
-        } else if (y > 2 && directionY != -MOVEMENT_VALUE) {
+        } else if (y > ROTATION_SENSIBILITY && directionY != -MOVEMENT_VALUE) {
             directionY = MOVEMENT_VALUE;
             directionX = 0;
             snakeHead.setRotation(180);
-        } else if (y < -2 && directionY != MOVEMENT_VALUE) {
+        } else if (y < -ROTATION_SENSIBILITY && directionY != MOVEMENT_VALUE) {
             directionY = -MOVEMENT_VALUE;
             directionX = 0;
             snakeHead.setRotation(0);
@@ -194,6 +202,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             if (snakeHeadRect.intersect(segmentRect)) {
                 killSnake();
+            } else if (segmentRect.intersect(etoileRect)) {
+                respawnStar();
+                snakeCollision();
             }
         }
     }
@@ -231,10 +242,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void snakeAcceleration() {
         switch(score){
-            case 2: cooldownValue=4; break;
-            case 10: cooldownValue=3; break;
-            case 20: cooldownValue=2; break;
-            case 40: cooldownValue=1; break;
+            case LOW_ACCELERATION: cooldownValue = 4; break;
+            case MEDIUM_ACCELERATION: cooldownValue = 3; break;
+            case FAST_ACCELERATION: cooldownValue = 2; break;
+            case SUPERSONIC_ACCELERATION: cooldownValue = 1; break;
         }
     }
 
