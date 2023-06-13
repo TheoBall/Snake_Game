@@ -260,6 +260,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         newY = random.nextInt(MAX_HEIGHT_TILE_VALUE)*MOVEMENT_VALUE+SCREEN_HEIGHT_GAP_VALUE;
         etoile.setX(newX);
         etoile.setY(newY);
+        snakeCollision();
     }
 
     /**
