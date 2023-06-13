@@ -13,7 +13,8 @@
         android:layout_height="95dp"
         android:text="Values"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:elevation="10dp"/>
 
     <ImageView
         android:id="@+id/snakeHead"
